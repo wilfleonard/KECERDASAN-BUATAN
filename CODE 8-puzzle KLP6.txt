@@ -1,0 +1,131 @@
+class Node:
+    def __init__(self,data,level,fval,prev):
+        self.data = data
+        self.level = level
+        self.fval = fval
+        self.prev = prev
+
+    # Mengembalikan node/cell yg dapat dilalui oleh cell kosong
+    def generate_child(self):
+        row,col = self.find(self.data,'_')
+        nList = []
+        n = len(self.data)
+
+        if col+1 < n:
+            neighbor = self.__copy()
+            self.__swap(neighbor, row, col+1, row, col)
+            nList.append(Node(neighbor, self.level+1, 0, None))
+        if col-1 >= 0:
+            neighbor = self.__copy()
+            self.__swap(neighbor, row, col-1, row, col)
+            nList.append(Node(neighbor, self.level+1, 0, None))
+        if row+1 < n:
+            neighbor = self.__copy()
+            self.__swap(neighbor, row+1, col, row, col)
+            nList.append(Node(neighbor, self.level+1, 0, None))
+        if row-1 >= 0:
+            neighbor = self.__copy()
+            self.__swap(neighbor, row-1, col, row, col)
+            nList.append(Node(neighbor, self.level+1, 0, None))
+        return nList;
+
+
+    # Menukar nilai dari posisi cell kosong dan cell yg akan di lalui
+    def __swap(self, board, r1, c1, r2, c2):
+        temp = board[r1][c1]
+        board[r1][c1] = board[r2][c2]
+        board[r2][c2] = temp
+            
+    # Mengcopy kembali nilai setiap cell
+    def __copy(self):
+        temp = []
+        for i in self.data:
+            t = []
+            for j in i:
+                t.append(j)
+            temp.append(t)
+        return temp    
+
+    # Mengembalikan baris dan kolom dari cell kosong            
+    def find(self,puz,x):
+        for i in range(0,len(self.data)):
+            for j in range(0,len(self.data)):
+                if puz[i][j] == x:
+                    return i,j
+
+
+class Puzzle:
+    def __init__(self,size):
+        self.n = size
+        self.open = []
+        self.closed = []
+
+    # Mengambil input state awal dari user
+    def accept(self):
+        puz = []
+        for i in range(0,self.n):
+            temp = input().split()
+            puz.append(temp)
+        return puz
+
+    # Mengembalikan nilai heuristic
+    def f(self,start,goal):
+        return self.h(start.data,goal)+start.level
+
+    # Mengembalikan jumlah cell yang belum berada pada tempatnya
+    def h(self,start,goal):
+        temp = 0
+        for i in range(0,self.n):
+            for j in range(0,self.n):
+                if start[i][j] != goal[i][j] and start[i][j] != '_':
+                    temp += 1
+        return temp
+    
+    # Mengembalikan jalur dari state awal menuju state akhir (solusi)
+    def solutions(self, result):
+        sol = []
+        jalur = result
+        while jalur != None:
+            sol.insert(0, jalur)
+            jalur = jalur.prev
+
+        return sol
+        
+    # Algoritma A*
+    def process(self):
+        print("Masukkan state awal puzzle \n")
+        start = self.accept()
+        print("Masukkan state akhir puzzle \n")        
+        goal = self.accept()
+        
+        start = Node(start,0,0, None)
+        start.fval = self.f(start,goal)
+        self.open.append(start)
+        print("\n")
+
+        while True:
+            sedangDikunjungi = self.open[0]
+            
+            if(self.h(sedangDikunjungi.data,goal) == 0):
+                start = sedangDikunjungi
+                print("Jumlah step yang dibutuhkan =", sedangDikunjungi.level)
+                break
+            for i in sedangDikunjungi.generate_child():
+                i.fval = self.f(i,goal)
+                i.prev = sedangDikunjungi
+                self.open.append(i)
+            self.closed.append(sedangDikunjungi)
+            start = sedangDikunjungi
+            del self.open[0]
+
+            self.open.sort(key = lambda x:x.fval,reverse=False)
+
+        for i in self.solutions(start):
+            for j in i.data:
+                for k in j:
+                    print(k, end=" ")
+                print()
+            print()
+
+puz = Puzzle(3)
+puz.process()
